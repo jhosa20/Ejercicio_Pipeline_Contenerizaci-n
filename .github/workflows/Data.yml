@@ -19,7 +19,7 @@ jobs:
 
       - name: Copy SQL files to EC2
         run: |
-          scp -o StrictHostKeyChecking=no -i key.pem sql/*.sql ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/
+          scp -o StrictHostKeyChecking=no -i key.pem sql/*.sql ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/sql/
 
       - name: Execute SQL files in PostgreSQL container
         uses: appleboy/ssh-action@v0.1.10
@@ -28,7 +28,9 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            for file in ~/$(ls *.sql); do
+            mkdir -p ~/sql
+            for file in ~/sql/*.sql; do
+              echo "📥 Procesando $file..."
               docker cp "$file" postgresql-dev:/tmp/
               docker exec -i postgresql-dev psql -U ${{ secrets.POSTGRES_USER }} -d ${{ secrets.POSTGRES_DB }} -f /tmp/$(basename "$file")
             done
